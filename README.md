@@ -1,6 +1,5 @@
 # API-GQS
 Avaliação GQS
-# usando o Postman ou similares
 
 # Explicação dos Testes
 
