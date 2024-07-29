@@ -1,0 +1,19 @@
+{
+  "name": "gqs_avaliacao",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "Andre",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2",
+    "postman": "^0.2.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
+  }
+}
