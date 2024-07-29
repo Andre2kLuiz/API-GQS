@@ -1,0 +1,2 @@
+# API-GQS
+Avaliação GQS
