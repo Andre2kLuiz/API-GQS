@@ -1,49 +1,92 @@
 const request = require('supertest');
-const express = require('express');
-const pedidos = require('../pedidos');
-const rotas = require('../rotas');
+const app = require('../index');
 
-const app = express();
-app.use(express.json());
-app.use('/pedidos', pedidos);
-app.use('/rotas', rotas);
+beforeAll((done) => {
+    const PORT = 3001; // Use uma porta diferente para os testes
+    server = app.listen(PORT, () => {
+        global.agent = request.agent(server);
+        done();
+    });
+});
+
+afterAll((done) => {
+    server.close(done);
+});
 
 describe('API Endpoints', () => {
-    it('GET /pedidos - Deve retornar a lista de pedidos', async () => {
+    let rotas = [];
+    let pedidos = [];
+
+    beforeAll(() => {
+        rotas = [];
+        pedidos = [];
+    });
+
+    it('GET /pedidos - Retorna uma lista de pedidos', async () => {
         const res = await request(app).get('/pedidos');
         expect(res.statusCode).toEqual(200);
-        expect(res.body).toBeInstanceOf(Array);
+        expect(Array.isArray(res.body)).toBe(true);
     });
 
-    it('POST /pedidos - Deve criar um novo pedido', async () => {
-        const novoPedido = { item: 'Salada', quantidade: 1 };
-        const res = await request(app).post('/pedidos').send(novoPedido);
+    it('POST /pedidos - Cria um novo pedido', async () => {
+        const newPedido = {
+            endereco: {
+                latitude: -23.550520,
+                longitude: -46.633308
+            },
+            produto: 'Produto A',
+            quantidade: 10
+        };
+        const res = await request(app).post('/pedidos').send(newPedido);
         expect(res.statusCode).toEqual(201);
-        expect(res.body).toHaveProperty('id');
-        expect(res.body.item).toEqual('Salada');
-        expect(res.body.quantidade).toEqual(1);
+        expect(res.body.endereco.latitude).toEqual(newPedido.endereco.latitude);
+        expect(res.body.endereco.longitude).toEqual(newPedido.endereco.longitude);
+        expect(res.body.produto).toEqual(newPedido.produto);
+        expect(res.body.quantidade).toEqual(newPedido.quantidade);
+        pedidos.push(newPedido);
     });
 
-    it('GET /rotas - Deve retornar a lista de rotas', async () => {
+    it('GET /rotas - Retorna uma lista de rotas', async () => {
         const res = await request(app).get('/rotas');
         expect(res.statusCode).toEqual(200);
-        expect(res.body).toBeInstanceOf(Array);
+        expect(Array.isArray(res.body)).toBe(true);
     });
 
-    it('POST /rotas - Deve criar uma nova rota', async () => {
-        const novaRota = { nome: 'Rota 3', pontos: ['G', 'H', 'I'] };
-        const res = await request(app).post('/rotas').send(novaRota);
+    it('POST /rotas - Cria uma nova rota', async () => {
+        const newRota = {
+            latitude: -23.550520,
+            longitude: -46.633308
+        };
+        const res = await request(app).post('/rotas').send(newRota);
         expect(res.statusCode).toEqual(201);
-        expect(res.body).toHaveProperty('id');
-        expect(res.body.nome).toEqual('Rota 3');
-        expect(res.body.pontos).toEqual(['G', 'H', 'I']);
+        expect(Array.isArray(res.body.pontos)).toBe(true);
+        expect(res.body.pontos.length).toEqual(1);
+        expect(res.body.pontos[0].latitude).toEqual(newRota.latitude);
+        expect(res.body.pontos[0].longitude).toEqual(newRota.longitude);
+        rotas.push(newRota);
     });
 
-    it('GET /melhor-rota/:id - Deve retornar a melhor rota de entrega', async () => {
-        const res = await request(app).get('/rotas/melhor-rota/1');
+    it('GET /melhor-rota/:index - Retorna a melhor rota de entrega', async () => {
+        const newRota = {
+            latitude: -23.550520,
+            longitude: -46.633308
+        };
+        const rotaRes = await request(app).post('/rotas').send(newRota);
+        const rotaIndex = rotas.length - 1; // Última rota adicionada
+
+        const newPedido = {
+            endereco: {
+                latitude: -23.551520,
+                longitude: -46.634308
+            },
+            produto: 'Produto A',
+            quantidade: 10
+        };
+        await request(app).post('/pedidos').send(newPedido);
+
+        const res = await request(app).get(`/melhor-rota/${rotaIndex}`);
         expect(res.statusCode).toEqual(200);
-        expect(res.body).toHaveProperty('id');
-        expect(res.body).toHaveProperty('nome');
-        expect(res.body).toHaveProperty('pontos');
+        expect(Array.isArray(res.body)).toBe(true);
+        expect(res.body[0]).toHaveProperty('endereco');
     });
 });
